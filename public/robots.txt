@@ -1,0 +1,5 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow:
+
+Sitemap: https://zhangzhimingwork.github.io/ai-chat-web/sitemap.xml
