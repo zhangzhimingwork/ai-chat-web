@@ -4,9 +4,16 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// 初始化主题
+if (typeof document !== 'undefined') {
+  const theme = localStorage.getItem('ai_chat_theme') || 'light';
+  document.documentElement.classList.add(theme);
+}
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+
 root.render(
   <React.StrictMode>
     <App />
