@@ -6,3 +6,6 @@ export * from './Layout';
 
 // Chat Components
 export * from './Chat';
+
+// Conversation Components
+export * from './Conversation';
