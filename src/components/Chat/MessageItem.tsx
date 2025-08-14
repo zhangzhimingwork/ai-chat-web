@@ -6,8 +6,31 @@ import {
   CheckIcon
 } from '@heroicons/react/24/outline';
 import { Message } from '../../types';
-import { formatMessageTime, copyToClipboard } from '../../utils';
 import clsx from 'clsx';
+
+// 工具函数
+const formatMessageTime = (timestamp: string): string => {
+  return new Date(timestamp).toLocaleTimeString('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {
+    // 备用方案
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return true;
+  }
+};
 
 interface MessageItemProps {
   message: Message;
