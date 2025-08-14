@@ -1,68 +1,57 @@
-// API端点
-export const API_ENDPOINTS = {
-  CHAT: '/api/chat',
-  CONVERSATIONS: '/api/conversations',
-  HEALTH: '/'
-} as const;
+// UI相关常量
+export const UI_CONSTANTS = {
+  MAX_MESSAGE_LENGTH: 4000,
+  MAX_CONVERSATION_TITLE_LENGTH: 100,
+  TYPING_ANIMATION_DELAY: 150,
+  AUTO_SAVE_DELAY: 1000,
+  SCROLL_BEHAVIOR: 'smooth' as ScrollBehavior,
+  DEBOUNCE_DELAY: 300
+};
 
-// GraphQL操作
-export const GRAPHQL_OPERATIONS = {
-  SEND_MESSAGE: 'SendMessage',
-  GET_CONVERSATIONS: 'GetConversations',
-  GET_CONVERSATION: 'GetConversation',
-  DELETE_CONVERSATION: 'DeleteConversation'
-} as const;
-
-// 本地存储键
+// 存储键名
 export const STORAGE_KEYS = {
   CONVERSATIONS: 'ai_chat_conversations',
   CURRENT_CONVERSATION: 'ai_chat_current_conversation',
   USER_PREFERENCES: 'ai_chat_user_preferences',
-  THEME: 'ai_chat_theme'
-} as const;
+  THEME: 'ai_chat_theme',
+  API_SETTINGS: 'ai_chat_api_settings'
+};
 
-// UI常量
-export const UI_CONSTANTS = {
-  MAX_MESSAGE_LENGTH: 4000,
-  TYPING_INDICATOR_DELAY: 500,
-  AUTO_SCROLL_DELAY: 100,
-  SIDEBAR_WIDTH: 260,
-  MESSAGE_ANIMATION_DURATION: 300
-} as const;
+// API相关常量
+export const API_CONSTANTS = {
+  DEFAULT_MODEL: 'deepseek-chat',
+  REQUEST_TIMEOUT: 30000,
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 1000
+};
 
-// 错误代码
-export const ERROR_CODES = {
-  NETWORK_ERROR: 'NETWORK_ERROR',
-  INVALID_MESSAGE: 'INVALID_MESSAGE',
-  CONVERSATION_NOT_FOUND: 'CONVERSATION_NOT_FOUND',
-  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
-  INTERNAL_ERROR: 'INTERNAL_ERROR'
-} as const;
+// 错误消息
+export const ERROR_MESSAGES = {
+  NETWORK_ERROR: '网络连接失败，请检查网络设置',
+  API_ERROR: 'API调用失败，请稍后重试',
+  INVALID_INPUT: '输入内容无效，请检查后重试',
+  MESSAGE_TOO_LONG: '消息长度超出限制',
+  CONVERSATION_NOT_FOUND: '对话不存在',
+  SAVE_FAILED: '保存失败，请重试',
+  LOAD_FAILED: '加载失败，请刷新页面'
+};
+
+// 成功消息
+export const SUCCESS_MESSAGES = {
+  MESSAGE_SENT: '消息发送成功',
+  CONVERSATION_CREATED: '新对话已创建',
+  CONVERSATION_DELETED: '对话已删除',
+  SETTINGS_SAVED: '设置已保存',
+  DATA_EXPORTED: '数据导出成功',
+  DATA_IMPORTED: '数据导入成功'
+};
 
 // 默认配置
 export const DEFAULT_CONFIG = {
-  API_URL: process.env.REACT_APP_API_URL || 'http://localhost:8787',
-  GRAPHQL_URL: process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:8787/graphql',
-  THEME: 'light' as const,
-  LANGUAGE: 'zh-CN' as const
-} as const;
-
-// 主题配置
-export const THEME_CONFIG = {
-  light: {
-    primary: '#3b82f6',
-    secondary: '#6b7280',
-    background: '#ffffff',
-    surface: '#f9fafb',
-    text: '#111827',
-    border: '#e5e7eb'
-  },
-  dark: {
-    primary: '#60a5fa',
-    secondary: '#9ca3af',
-    background: '#111827',
-    surface: '#1f2937',
-    text: '#f9fafb',
-    border: '#374151'
-  }
-} as const;
+  theme: 'light' as 'light' | 'dark',
+  language: 'zh-CN',
+  autoSave: true,
+  showTimestamp: true,
+  enableNotifications: false,
+  maxConversations: 50
+};
