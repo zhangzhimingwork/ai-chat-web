@@ -2,7 +2,11 @@ import React, { useEffect } from 'react';
 import { Message } from '../../types';
 import { MessageItem } from './MessageItem';
 import { TypingIndicator } from '../UI';
-import { scrollToBottom } from '../../utils';
+
+// 工具函数
+const scrollToBottom = (element: HTMLElement) => {
+  element.scrollTop = element.scrollHeight;
+};
 
 interface MessageListProps {
   messages: Message[];
