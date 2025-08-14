@@ -1,8 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import { Button, TextArea } from '../UI';
-import { isEmptyString } from '../../utils';
 import { UI_CONSTANTS } from '../../utils/constants';
+
+// 工具函数
+const isEmptyString = (str: string): boolean => {
+  return !str || str.trim().length === 0;
+};
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
