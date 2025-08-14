@@ -1,8 +1,0 @@
-{
-    "name": "chat-web",
-    "compatibility_date": "2025-08-14",
-    "assets": {
-      "directory": "/opt/buildhome/repo/dist"
-    }
-  }
-  
