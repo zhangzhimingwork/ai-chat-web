@@ -31,25 +31,50 @@ export const GET_CONVERSATION = gql`
         content
         role
         timestamp
-        conversationId
       }
     }
   }
 `;
 
-// 获取对话历史(从后端API)
-export const GET_CONVERSATION_HISTORY = gql`
-  query GetConversationHistory($conversationId: String!) {
-    conversationHistory(conversationId: $conversationId) {
+// 获取用户设置
+export const GET_USER_PREFERENCES = gql`
+  query GetUserPreferences {
+    userPreferences {
+      theme
+      language
+      autoSave
+      showTimestamp
+      enableNotifications
+    }
+  }
+`;
+
+// 搜索对话
+export const SEARCH_CONVERSATIONS = gql`
+  query SearchConversations($query: String!) {
+    searchConversations(query: $query) {
       id
-      messages {
-        id
-        role
-        content
-        timestamp
-      }
+      title
       createdAt
       updatedAt
+      messages {
+        id
+        content
+        role
+        timestamp
+      }
+    }
+  }
+`;
+
+// 获取对话统计
+export const GET_CONVERSATION_STATS = gql`
+  query GetConversationStats {
+    conversationStats {
+      totalConversations
+      totalMessages
+      averageMessagesPerConversation
+      mostActiveDay
     }
   }
 `;

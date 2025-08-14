@@ -2,34 +2,25 @@ import { gql } from '@apollo/client';
 
 // 发送消息
 export const SEND_MESSAGE = gql`
-  mutation SendMessage(
-    $message: String!
-    $conversationId: String
-    $systemPrompt: String
-  ) {
-    sendMessage(
-      message: $message
-      conversationId: $conversationId
-      systemPrompt: $systemPrompt
-    ) {
+  mutation SendMessage($message: String!, $conversationId: ID) {
+    sendMessage(message: $message, conversationId: $conversationId) {
       message {
         id
         content
         role
         timestamp
-        conversationId
       }
       conversation {
         id
         title
+        createdAt
+        updatedAt
         messages {
           id
           content
           role
           timestamp
         }
-        createdAt
-        updatedAt
       }
     }
   }
@@ -41,14 +32,14 @@ export const CREATE_CONVERSATION = gql`
     createConversation(title: $title) {
       id
       title
+      createdAt
+      updatedAt
       messages {
         id
         content
         role
         timestamp
       }
-      createdAt
-      updatedAt
     }
   }
 `;
@@ -70,6 +61,57 @@ export const UPDATE_CONVERSATION_TITLE = gql`
       id
       title
       updatedAt
+    }
+  }
+`;
+
+// 清空对话消息
+export const CLEAR_CONVERSATION = gql`
+  mutation ClearConversation($id: ID!) {
+    clearConversation(id: $id) {
+      id
+      title
+      messages {
+        id
+        content
+        role
+        timestamp
+      }
+    }
+  }
+`;
+
+// 更新用户设置
+export const UPDATE_USER_PREFERENCES = gql`
+  mutation UpdateUserPreferences($preferences: UserPreferencesInput!) {
+    updateUserPreferences(preferences: $preferences) {
+      theme
+      language
+      autoSave
+      showTimestamp
+      enableNotifications
+    }
+  }
+`;
+
+// 导出对话数据
+export const EXPORT_CONVERSATIONS = gql`
+  mutation ExportConversations {
+    exportConversations {
+      data
+      filename
+      mimeType
+    }
+  }
+`;
+
+// 导入对话数据
+export const IMPORT_CONVERSATIONS = gql`
+  mutation ImportConversations($data: String!) {
+    importConversations(data: $data) {
+      success
+      message
+      importedCount
     }
   }
 `;

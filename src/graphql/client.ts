@@ -1,20 +1,21 @@
 import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
-import { DEFAULT_CONFIG } from '../utils/constants';
 
-// HTTP链接
+// 创建HTTP链接
 const httpLink = createHttpLink({
-  uri: DEFAULT_CONFIG.GRAPHQL_URL,
+  uri: process.env.REACT_APP_GRAPHQL_URL || '/graphql',
 });
 
 // 认证链接
 const authLink = setContext((_, { headers }) => {
+  // 从localStorage获取认证token
+  const token = localStorage.getItem('auth_token');
+  
   return {
     headers: {
       ...headers,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      authorization: token ? `Bearer ${token}` : "",
     }
   };
 });
@@ -32,42 +33,51 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
   if (networkError) {
     console.error(`Network error: ${networkError}`);
     
-    // 如果是网络错误，可以尝试重试或显示错误消息
-    if (networkError.message.includes('fetch')) {
-      console.log('网络连接失败，请检查网络连接');
+    // 处理认证错误
+    if (networkError.statusCode === 401) {
+      // 清除过期的token
+      localStorage.removeItem('auth_token');
+      // 可以在这里触发重新登录
     }
   }
 });
 
-// 创建Apollo Client
-export const apolloClient = new ApolloClient({
-  link: from([errorLink, authLink, httpLink]),
-  cache: new InMemoryCache({
-    typePolicies: {
-      Conversation: {
-        fields: {
-          messages: {
-            merge(existing = [], incoming) {
-              return incoming;
-            }
+// 缓存配置
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        conversations: {
+          merge(existing = [], incoming) {
+            return incoming;
+          }
+        }
+      }
+    },
+    Conversation: {
+      fields: {
+        messages: {
+          merge(existing = [], incoming) {
+            return incoming;
           }
         }
       }
     }
-  }),
+  }
+});
+
+// 创建Apollo客户端
+export const apolloClient = new ApolloClient({
+  link: from([errorLink, authLink, httpLink]),
+  cache,
   defaultOptions: {
     watchQuery: {
-      errorPolicy: 'all',
-      fetchPolicy: 'cache-and-network'
+      fetchPolicy: 'cache-and-network',
+      errorPolicy: 'all'
     },
     query: {
-      errorPolicy: 'all',
-      fetchPolicy: 'cache-first'
-    },
-    mutate: {
+      fetchPolicy: 'cache-first',
       errorPolicy: 'all'
     }
   }
 });
-
-export default apolloClient;
