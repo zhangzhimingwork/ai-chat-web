@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Conversation, Message, UseChatReturn } from '../types';
-import { UI_CONSTANTS, STORAGE_KEYS } from '../utils/constants';
+import { STORAGE_KEYS } from '../utils/constants';
 
 // 工具函数
 const generateId = (): string => {
@@ -92,7 +92,7 @@ export const useChat = (): UseChatReturn => {
       setIsTyping(true);
       
       // 调用API
-      const response = await fetch(process.env.REACT_APP_API_URL || '/api/chat', {
+      const response = await fetch(process.env.REACT_APP_API_URL + '/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

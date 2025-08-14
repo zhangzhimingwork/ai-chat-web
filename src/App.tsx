@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { ApolloProvider } from '@apollo/client';
 import { apolloClient } from './graphql/client';
 import { Header, Sidebar, ChatContainer } from './components';
