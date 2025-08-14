@@ -6,6 +6,7 @@ import {
   CheckIcon
 } from '@heroicons/react/24/outline';
 import { Message } from '../../types';
+import { MarkdownContent } from '../UI';
 import clsx from 'clsx';
 
 // 工具函数
@@ -82,11 +83,20 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, isLast }) => 
           </span>
         </div>
         
-        {/* 移除prose类，使用自定义样式 */}
-        <div className="text-gray-900 dark:text-gray-100 text-sm leading-relaxed">
-          <div className="whitespace-pre-wrap break-words">
-            {message.content}
-          </div>
+        {/* 使用MarkdownContent渲染消息内容 */}
+        <div className="text-sm">
+          {isUser ? (
+            // 用户消息保持纯文本显示
+            <div className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
+              {message.content}
+            </div>
+          ) : (
+            // AI消息使用Markdown渲染
+            <MarkdownContent 
+              content={message.content}
+              className="text-gray-900 dark:text-gray-100"
+            />
+          )}
         </div>
 
         {/* 操作按钮 */}
