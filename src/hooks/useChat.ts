@@ -54,7 +54,7 @@ export const useChat = (): UseChatReturn => {
   
   const [conversations, setConversations] = useState<Conversation[]>(savedConversations);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(
-    currentId ? savedConversations.find(c => c.id === currentId) || null : null
+    currentId ? savedConversations.find((c: Conversation) => c.id === currentId) || null : null
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);

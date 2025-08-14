@@ -34,7 +34,7 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
     console.error(`Network error: ${networkError}`);
     
     // 处理认证错误
-    if (networkError.statusCode === 401) {
+    if ('statusCode' in networkError && networkError.statusCode === 401) {
       // 清除过期的token
       localStorage.removeItem('auth_token');
       // 可以在这里触发重新登录

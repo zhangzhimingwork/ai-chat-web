@@ -171,9 +171,10 @@ export const getUrlParams = (url: string): Record<string, string> => {
   const params = new URLSearchParams(new URL(url).search);
   const result: Record<string, string> = {};
   
-  for (const [key, value] of params.entries()) {
+  // 使用forEach替代for...of来兼容旧版本TypeScript
+  params.forEach((value, key) => {
     result[key] = value;
-  }
+  });
   
   return result;
 };

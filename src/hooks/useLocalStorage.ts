@@ -36,5 +36,5 @@ export const useLocalStorage = <T>(
     }
   }, [key, initialValue]);
 
-  return [storedValue, setValue, removeValue] as UseLocalStorageReturn<T>;
+  return [storedValue, setValue, removeValue];
 };

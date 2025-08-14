@@ -92,8 +92,9 @@ export interface UseThemeReturn {
   toggleTheme: () => void;
 }
 
-export interface UseLocalStorageReturn<T> {
-  0: T;
-  1: (value: T) => void;
-  2: () => void;
-}
+// 修复useLocalStorage返回类型
+export type UseLocalStorageReturn<T> = [
+  T,
+  (value: T) => void,
+  () => void
+];
