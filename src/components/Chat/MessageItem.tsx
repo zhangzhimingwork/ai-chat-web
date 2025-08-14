@@ -82,8 +82,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, isLast }) => 
           </span>
         </div>
         
-        <div className="prose prose-sm max-w-none dark:prose-invert">
-          <div className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
+        {/* 移除prose类，使用自定义样式 */}
+        <div className="text-gray-900 dark:text-gray-100 text-sm leading-relaxed">
+          <div className="whitespace-pre-wrap break-words">
             {message.content}
           </div>
         </div>
