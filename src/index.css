@@ -97,6 +97,84 @@
     animation-delay: 0.4s;
   }
 
+  /* Markdown内容样式 */
+  .markdown-content {
+    line-height: 1.6;
+  }
+
+  .markdown-content h1:first-child,
+  .markdown-content h2:first-child,
+  .markdown-content h3:first-child,
+  .markdown-content h4:first-child,
+  .markdown-content p:first-child {
+    margin-top: 0;
+  }
+
+  .markdown-content h1:last-child,
+  .markdown-content h2:last-child,
+  .markdown-content h3:last-child,
+  .markdown-content h4:last-child,
+  .markdown-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 代码块优化 */
+  .markdown-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .markdown-content code {
+    word-break: break-word;
+  }
+
+  /* 表格响应式 */
+  .markdown-content table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .markdown-content table {
+      font-size: 0.875rem;
+    }
+  }
+
+  /* 列表样式优化 */
+  .markdown-content ul {
+    list-style-position: outside;
+    margin-left: 1.5rem;
+  }
+
+  .markdown-content ol {
+    list-style-position: outside;
+    margin-left: 1.5rem;
+  }
+
+  .markdown-content li {
+    margin: 0.25rem 0;
+  }
+
+  /* 引用块样式 */
+  .markdown-content blockquote {
+    position: relative;
+  }
+
+  .markdown-content blockquote::before {
+    content: '"';
+    font-size: 2rem;
+    color: rgb(156 163 175);
+    position: absolute;
+    left: -0.5rem;
+    top: -0.5rem;
+  }
+
+  .dark .markdown-content blockquote::before {
+    color: rgb(75 85 99);
+  }
+
   /* Prose样式优化 */
   .prose {
     max-width: none;
@@ -201,6 +279,22 @@
   }
 
   .prose h3 {
+    font-size: 1.125rem;
+  }
+
+  .markdown-content {
+    font-size: 0.875rem;
+  }
+
+  .markdown-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.25rem;
+  }
+
+  .markdown-content h3 {
     font-size: 1.125rem;
   }
 }
