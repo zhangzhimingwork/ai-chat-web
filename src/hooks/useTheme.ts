@@ -1,50 +1,47 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useLocalStorage } from './useLocalStorage';
-import { STORAGE_KEYS, DEFAULT_CONFIG } from '../utils/constants';
+import { useEffect, useState } from 'react';
+import { Theme, UseThemeReturn } from '../types';
+import { STORAGE_KEYS } from '../utils/constants';
 
-type Theme = 'light' | 'dark';
-
-export function useTheme() {
-  const [theme, setThemeStorage] = useLocalStorage<Theme>(
-    STORAGE_KEYS.THEME, 
-    DEFAULT_CONFIG.THEME
-  );
-  
+export const useTheme = (): UseThemeReturn => {
+  const [theme, setThemeState] = useState<Theme>('light');
   const [mounted, setMounted] = useState(false);
 
-  // 防止hydration错误
   useEffect(() => {
+    // 从localStorage读取主题设置
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as Theme;
+    if (savedTheme) {
+      setThemeState(savedTheme);
+    } else {
+      // 如果没有保存的主题，使用系统偏好
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      setThemeState(systemTheme);
+    }
     setMounted(true);
   }, []);
 
-  // 设置主题
-  const setTheme = useCallback((newTheme: Theme) => {
-    setThemeStorage(newTheme);
-    
-    // 更新document的class
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.remove('light', 'dark');
-      document.documentElement.classList.add(newTheme);
-    }
-  }, [setThemeStorage]);
-
-  // 切换主题
-  const toggleTheme = useCallback(() => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  }, [theme, setTheme]);
-
-  // 初始化主题
   useEffect(() => {
-    if (mounted && typeof document !== 'undefined') {
-      document.documentElement.classList.remove('light', 'dark');
-      document.documentElement.classList.add(theme);
-    }
+    if (!mounted) return;
+    
+    // 应用主题到document
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+    
+    // 保存到localStorage
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
   }, [theme, mounted]);
+
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
+  };
+
+  const toggleTheme = () => {
+    setThemeState(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   return {
     theme,
+    mounted,
     setTheme,
-    toggleTheme,
-    mounted
+    toggleTheme
   };
-}
+};

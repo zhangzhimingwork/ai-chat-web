@@ -1,108 +1,83 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
-import { SEND_MESSAGE } from '../graphql/mutations';
-import { GET_CONVERSATIONS, GET_CONVERSATION } from '../graphql/queries';
-import { Message, Conversation, ChatRequest, ChatResponse } from '../types';
-import { 
-  createMessage, 
-  createNewConversation, 
-  generateConversationTitle,
-  getErrorMessage,
-  setLocalStorage,
-  getLocalStorage
-} from '../utils';
-import { STORAGE_KEYS, DEFAULT_CONFIG, UI_CONSTANTS } from '../utils/constants';
+import { useState, useRef, useCallback } from 'react';
+import { Conversation, Message, UseChatReturn } from '../types';
+import { UI_CONSTANTS, STORAGE_KEYS } from '../utils/constants';
 
-export interface UseChatReturn {
-  // 状态
-  currentConversation: Conversation | null;
-  conversations: Conversation[];
-  isLoading: boolean;
-  isTyping: boolean;
-  error: string | null;
-  
-  // 操作
-  sendMessage: (content: string) => Promise<void>;
-  createConversation: () => void;
-  selectConversation: (conversationId: string) => void;
-  deleteConversation: (conversationId: string) => void;
-  clearError: () => void;
-  
-  // 引用
-  messagesEndRef: React.RefObject<HTMLDivElement>;
-}
+// 工具函数
+const generateId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
+const createMessage = (content: string, role: 'user' | 'assistant'): Message => {
+  return {
+    id: generateId(),
+    content,
+    role,
+    timestamp: new Date().toISOString()
+  };
+};
+
+const createNewConversation = (title?: string): Conversation => {
+  return {
+    id: generateId(),
+    title: title || '新对话',
+    messages: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+};
+
+// 本地存储工具
+const saveToStorage = (conversations: Conversation[], currentId?: string) => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
+    if (currentId) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_CONVERSATION, currentId);
+    }
+  } catch (error) {
+    console.error('Failed to save to localStorage:', error);
+  }
+};
+
+const loadFromStorage = () => {
+  try {
+    const conversations = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONVERSATIONS) || '[]');
+    const currentId = localStorage.getItem(STORAGE_KEYS.CURRENT_CONVERSATION);
+    return { conversations, currentId };
+  } catch (error) {
+    console.error('Failed to load from localStorage:', error);
+    return { conversations: [], currentId: null };
+  }
+};
 
 export const useChat = (): UseChatReturn => {
-  // 状态
-  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const { conversations: savedConversations, currentId } = loadFromStorage();
+  
+  const [conversations, setConversations] = useState<Conversation[]>(savedConversations);
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(
+    currentId ? savedConversations.find(c => c.id === currentId) || null : null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // 引用
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // GraphQL
-  const [sendMessageMutation] = useMutation(SEND_MESSAGE);
-  const { data: conversationsData, refetch: refetchConversations } = useQuery(GET_CONVERSATIONS);
-  
-  // 初始化从本地存储加载数据
-  useEffect(() => {
-    const savedConversations = getLocalStorage<Conversation[]>(STORAGE_KEYS.CONVERSATIONS, []);
-    const savedCurrentConversation = getLocalStorage<Conversation | null>(
-      STORAGE_KEYS.CURRENT_CONVERSATION, 
-      null
-    );
-    
-    setConversations(savedConversations);
-    if (savedCurrentConversation) {
-      setCurrentConversation(savedCurrentConversation);
-    }
-  }, []);
-  
-  // 同步GraphQL数据
-  useEffect(() => {
-    if (conversationsData?.conversations) {
-      setConversations(conversationsData.conversations);
-    }
-  }, [conversationsData]);
-  
-  // 自动滚动到底部
-  const scrollToBottom = useCallback(() => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, UI_CONSTANTS.AUTO_SCROLL_DELAY);
-  }, []);
-  
-  // 保存对话到本地存储
-  const saveConversationsToLocal = useCallback((convs: Conversation[], current?: Conversation | null) => {
-    setLocalStorage(STORAGE_KEYS.CONVERSATIONS, convs);
-    if (current !== undefined) {
-      setLocalStorage(STORAGE_KEYS.CURRENT_CONVERSATION, current);
-    }
-  }, []);
-  
-  // 发送消息
-  const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim()) return;
+
+  const sendMessage = useCallback(async (message: string) => {
+    if (!message.trim()) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      // 创建用户消息
-      const userMessage = createMessage(content, 'user', currentConversation?.id);
-      
-      // 如果没有当前对话，创建新对话
+      // 如果没有当前对话，创建一个新的
       let conversation = currentConversation;
       if (!conversation) {
         conversation = createNewConversation();
-        conversation.title = generateConversationTitle([userMessage]);
         setCurrentConversation(conversation);
+        setConversations(prev => [conversation!, ...prev]);
       }
       
-      // 更新对话消息
+      // 添加用户消息
+      const userMessage = createMessage(message, 'user');
       const updatedConversation = {
         ...conversation,
         messages: [...conversation.messages, userMessage],
@@ -110,133 +85,94 @@ export const useChat = (): UseChatReturn => {
       };
       
       setCurrentConversation(updatedConversation);
-      
-      // 更新对话列表
-      const updatedConversations = conversations.some(c => c.id === conversation.id)
-        ? conversations.map(c => c.id === conversation.id ? updatedConversation : c)
-        : [updatedConversation, ...conversations];
-      
-      setConversations(updatedConversations);
-      saveConversationsToLocal(updatedConversations, updatedConversation);
-      
-      scrollToBottom();
-      
-      // 显示打字指示器
-      setIsTyping(true);
-      
-      // 调用GraphQL变更或直接调用API
-      let response: ChatResponse;
-      
-      try {
-        // 尝试使用GraphQL
-        const result = await sendMessageMutation({
-          variables: {
-            message: content,
-            conversationId: conversation.id
-          }
-        });
-        
-        if (result.data?.sendMessage) {
-          response = {
-            message: result.data.sendMessage.message.content,
-            conversationId: result.data.sendMessage.message.conversationId,
-            timestamp: result.data.sendMessage.message.timestamp,
-            model: 'deepseek-chat'
-          };
-        } else {
-          throw new Error('GraphQL返回数据为空');
-        }
-      } catch (gqlError) {
-        console.log('GraphQL请求失败，尝试直接调用API:', gqlError);
-        
-        // 如果GraphQL失败，直接调用REST API
-        const apiResponse = await fetch(`${DEFAULT_CONFIG.API_URL}/api/chat`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: content,
-            conversationId: conversation.id
-          } as ChatRequest)
-        });
-        
-        if (!apiResponse.ok) {
-          throw new Error(`HTTP error! status: ${apiResponse.status}`);
-        }
-        
-        response = await apiResponse.json();
-      }
-      
-      // 创建AI回复消息
-      const assistantMessage = createMessage(
-        response.message, 
-        'assistant', 
-        response.conversationId
+      setConversations(prev => 
+        prev.map(c => c.id === updatedConversation.id ? updatedConversation : c)
       );
       
-      // 更新对话
+      setIsTyping(true);
+      
+      // 调用API
+      const response = await fetch(process.env.REACT_APP_API_URL || '/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message,
+          conversationId: conversation.id,
+          model: 'deepseek-chat'
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // 添加AI回复
+      const aiMessage = createMessage(data.message, 'assistant');
       const finalConversation = {
         ...updatedConversation,
-        messages: [...updatedConversation.messages, assistantMessage],
+        messages: [...updatedConversation.messages, aiMessage],
         updatedAt: new Date().toISOString()
       };
       
       setCurrentConversation(finalConversation);
-      
-      const finalConversations = updatedConversations.map(c => 
-        c.id === conversation.id ? finalConversation : c
+      setConversations(prev => 
+        prev.map(c => c.id === finalConversation.id ? finalConversation : c)
       );
       
-      setConversations(finalConversations);
-      saveConversationsToLocal(finalConversations, finalConversation);
-      
-      scrollToBottom();
+      // 保存到本地存储
+      const newConversations = conversations.map(c => 
+        c.id === finalConversation.id ? finalConversation : c
+      );
+      if (!conversations.find(c => c.id === finalConversation.id)) {
+        newConversations.unshift(finalConversation);
+      }
+      saveToStorage(newConversations, finalConversation.id);
       
     } catch (err) {
-      console.error('发送消息失败:', err);
-      setError(getErrorMessage(err));
+      console.error('Failed to send message:', err);
+      setError('发送消息失败，请重试');
     } finally {
       setIsLoading(false);
       setIsTyping(false);
     }
-  }, [currentConversation, conversations, sendMessageMutation, saveConversationsToLocal, scrollToBottom]);
-  
-  // 创建新对话
+  }, [currentConversation, conversations]);
+
   const createConversation = useCallback(() => {
     const newConversation = createNewConversation();
     setCurrentConversation(newConversation);
-    setError(null);
-  }, []);
-  
-  // 选择对话
-  const selectConversation = useCallback((conversationId: string) => {
-    const conversation = conversations.find(c => c.id === conversationId);
+    setConversations(prev => [newConversation, ...prev]);
+    saveToStorage([newConversation, ...conversations], newConversation.id);
+  }, [conversations]);
+
+  const selectConversation = useCallback((id: string) => {
+    const conversation = conversations.find(c => c.id === id);
     if (conversation) {
       setCurrentConversation(conversation);
-      setLocalStorage(STORAGE_KEYS.CURRENT_CONVERSATION, conversation);
-      setError(null);
+      saveToStorage(conversations, id);
     }
   }, [conversations]);
-  
-  // 删除对话
-  const deleteConversation = useCallback((conversationId: string) => {
-    const updatedConversations = conversations.filter(c => c.id !== conversationId);
-    setConversations(updatedConversations);
+
+  const deleteConversation = useCallback((id: string) => {
+    const newConversations = conversations.filter(c => c.id !== id);
+    setConversations(newConversations);
     
-    if (currentConversation?.id === conversationId) {
-      setCurrentConversation(null);
-      setLocalStorage(STORAGE_KEYS.CURRENT_CONVERSATION, null);
+    if (currentConversation?.id === id) {
+      const nextConversation = newConversations[0] || null;
+      setCurrentConversation(nextConversation);
+      saveToStorage(newConversations, nextConversation?.id);
+    } else {
+      saveToStorage(newConversations, currentConversation?.id);
     }
-    
-    saveConversationsToLocal(updatedConversations);
-  }, [conversations, currentConversation, saveConversationsToLocal]);
-  
-  // 清除错误
+  }, [conversations, currentConversation]);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
-  
+
   return {
     currentConversation,
     conversations,
