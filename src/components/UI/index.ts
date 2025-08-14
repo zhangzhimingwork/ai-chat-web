@@ -4,3 +4,4 @@ export { TextArea } from './TextArea';
 export { LoadingSpinner } from './LoadingSpinner';
 export { TypingIndicator } from './TypingIndicator';
 export { ErrorMessage } from './ErrorMessage';
+export { MarkdownContent } from './MarkdownContent';
