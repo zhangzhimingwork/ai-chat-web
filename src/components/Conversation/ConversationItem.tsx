@@ -5,8 +5,30 @@ import {
   EllipsisVerticalIcon
 } from '@heroicons/react/24/outline';
 import { Conversation } from '../../types';
-import { formatRelativeTime, truncateText } from '../../utils';
 import clsx from 'clsx';
+
+// 工具函数
+const formatRelativeTime = (timestamp: string): string => {
+  const now = new Date();
+  const time = new Date(timestamp);
+  const diff = now.getTime() - time.getTime();
+  
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (minutes < 1) return '刚刚';
+  if (minutes < 60) return `${minutes}分钟前`;
+  if (hours < 24) return `${hours}小时前`;
+  if (days < 7) return `${days}天前`;
+  
+  return time.toLocaleDateString('zh-CN');
+};
+
+const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+};
 
 interface ConversationItemProps {
   conversation: Conversation;
