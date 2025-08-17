@@ -42,30 +42,6 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
   }
 });
 
-// 缓存配置
-const cache = new InMemoryCache({
-  typePolicies: {
-    Query: {
-      fields: {
-        conversations: {
-          merge(existing = [], incoming) {
-            return incoming;
-          }
-        }
-      }
-    },
-    Conversation: {
-      fields: {
-        messages: {
-          merge(existing = [], incoming) {
-            return incoming;
-          }
-        }
-      }
-    }
-  }
-});
-
 // 创建Apollo客户端
 export const apolloClient = new ApolloClient({
   link: from([errorLink, authLink, httpLink]),
