@@ -77,11 +77,12 @@ export interface UseChatReturn {
   isLoading: boolean;
   isTyping: boolean;
   error: string | null;
-  sendMessage: (message: string) => Promise<void>;
+  sendMessage: (message: string, systemPrompt?: string) => Promise<void>;
   createConversation: () => void;
   selectConversation: (id: string) => void;
   deleteConversation: (id: string) => void;
   clearError: () => void;
+  retryLastMessage: () => void; // 🔧 新增
   messagesEndRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -90,6 +91,28 @@ export interface UseThemeReturn {
   mounted: boolean;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  role: 'user' | 'assistant';
+  timestamp: string;
+}
+
+export interface Conversation {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: string;
+  updatedAt: string;
+  // 🔧 新增：GraphQL 响应的额外信息
+  lastUsage?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    totalTokens?: number;
+  };
+  lastModel?: string;
 }
 
 // 修复useLocalStorage返回类型

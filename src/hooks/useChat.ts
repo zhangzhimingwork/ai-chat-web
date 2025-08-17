@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
+import { useLazyQuery } from '@apollo/client';
 import { Conversation, Message, UseChatReturn } from '../types';
 import { STORAGE_KEYS } from '../utils/constants';
+import { CHAT_QUERY } from '../graphql/queries';
 
 // 工具函数
 const generateId = (): string => {
@@ -61,7 +63,19 @@ export const useChat = (): UseChatReturn => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = useCallback(async (message: string) => {
+  // 🔧 使用 Apollo Client 的 useLazyQuery
+  const [executeChat, { loading: queryLoading, error: queryError }] = useLazyQuery(CHAT_QUERY, {
+    fetchPolicy: 'network-only', // 总是从网络获取最新数据
+    errorPolicy: 'all', // 允许部分数据和错误同时存在
+    onError: (error) => {
+      console.error('GraphQL Chat Error:', error);
+      setError(error.message || '发送消息失败，请重试');
+      setIsLoading(false);
+      setIsTyping(false);
+    }
+  });
+
+  const sendMessage = useCallback(async (message: string, systemPrompt?: string) => {
     if (!message.trim()) return;
     
     setIsLoading(true);
@@ -91,31 +105,34 @@ export const useChat = (): UseChatReturn => {
       
       setIsTyping(true);
       
-      // 调用API
-      const response = await fetch(process.env.REACT_APP_API_URL + '/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
+      // 🔧 使用 GraphQL 查询替代 REST API
+      const result = await executeChat({
+        variables: {
+          message: message.trim(),
           conversationId: conversation.id,
-          model: 'deepseek-chat'
-        }),
+          systemPrompt: systemPrompt || undefined
+        }
       });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // 检查 GraphQL 响应
+      if (result.error) {
+        throw new Error(result.error.message);
       }
-      
-      const data = await response.json();
+
+      if (!result.data?.chat) {
+        throw new Error('未收到有效的响应数据');
+      }
+
+      const chatResult = result.data.chat;
       
       // 添加AI回复
-      const aiMessage = createMessage(data.message, 'assistant');
+      const aiMessage = createMessage(chatResult.message, 'assistant');
       const finalConversation = {
         ...updatedConversation,
         messages: [...updatedConversation.messages, aiMessage],
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        // 🔧 可选：保存 GraphQL 返回的额外信息
+        lastUsage: chatResult.usage,
+        lastModel: chatResult.model
       };
       
       setCurrentConversation(finalConversation);
@@ -134,12 +151,13 @@ export const useChat = (): UseChatReturn => {
       
     } catch (err) {
       console.error('Failed to send message:', err);
-      setError('发送消息失败，请重试');
+      const errorMessage = err instanceof Error ? err.message : '发送消息失败，请重试';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
       setIsTyping(false);
     }
-  }, [currentConversation, conversations]);
+  }, [currentConversation, conversations, executeChat]);
 
   const createConversation = useCallback(() => {
     const newConversation = createNewConversation();
@@ -173,17 +191,50 @@ export const useChat = (): UseChatReturn => {
     setError(null);
   }, []);
 
+  // 🔧 新增：重试发送消息
+  const retryLastMessage = useCallback(() => {
+    if (currentConversation && currentConversation.messages.length > 0) {
+      const lastUserMessage = [...currentConversation.messages]
+        .reverse()
+        .find(msg => msg.role === 'user');
+      
+      if (lastUserMessage) {
+        // 移除最后的错误消息（如果存在）
+        const messagesWithoutLastAI = currentConversation.messages.filter((msg, index) => {
+          if (msg.role === 'assistant' && index === currentConversation.messages.length - 1) {
+            return false;
+          }
+          return true;
+        });
+        
+        const updatedConversation = {
+          ...currentConversation,
+          messages: messagesWithoutLastAI
+        };
+        
+        setCurrentConversation(updatedConversation);
+        setConversations(prev => 
+          prev.map(c => c.id === updatedConversation.id ? updatedConversation : c)
+        );
+        
+        // 重新发送消息
+        sendMessage(lastUserMessage.content);
+      }
+    }
+  }, [currentConversation, sendMessage]);
+
   return {
     currentConversation,
     conversations,
-    isLoading,
+    isLoading: isLoading || queryLoading, // 🔧 合并加载状态
     isTyping,
-    error,
+    error: error || queryError?.message || null, // 🔧 合并错误状态
     sendMessage,
     createConversation,
     selectConversation,
     deleteConversation,
     clearError,
+    retryLastMessage, // 🔧 新增重试功能
     messagesEndRef
   };
 };

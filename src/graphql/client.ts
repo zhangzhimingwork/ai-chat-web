@@ -69,15 +69,24 @@ const cache = new InMemoryCache({
 // 创建Apollo客户端
 export const apolloClient = new ApolloClient({
   link: from([errorLink, authLink, httpLink]),
-  cache,
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          // 缓存策略：每次都重新获取聊天结果
+          chat: {
+            merge: false,
+          },
+        },
+      },
+    },
+  }),
   defaultOptions: {
     watchQuery: {
       fetchPolicy: 'cache-and-network',
-      errorPolicy: 'all'
     },
     query: {
       fetchPolicy: 'cache-first',
-      errorPolicy: 'all'
-    }
-  }
+    },
+  },
 });

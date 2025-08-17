@@ -1,5 +1,13 @@
 import { gql } from '@apollo/client';
 
+export const CHAT_QUERY = gql`
+  query Chat($message: String!, $conversationId: String, $systemPrompt: String) {
+    chat(message: $message, conversationId: $conversationId, systemPrompt: $systemPrompt) {
+      message
+    }
+  }
+`;
+
 // 获取所有对话
 export const GET_CONVERSATIONS = gql`
   query GetConversations {

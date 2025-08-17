@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { ApolloProvider } from '@apollo/client';
+import { apolloClient } from './graphql/client';
 
 // 初始化主题
 if (typeof document !== 'undefined') {
@@ -16,7 +18,9 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <App />
+    <ApolloProvider client={apolloClient}>
+          <App />
+    </ApolloProvider>
   </React.StrictMode>
 );
 
